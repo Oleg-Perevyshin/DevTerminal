@@ -1,0 +1,51 @@
+# rustfmt.toml
+# Базовые отступы и ширина
+tab_spaces = 2
+max_width = 160
+chain_width = 60
+newline_style = "Auto"
+
+# Импорты
+reorder_imports = true
+group_imports = "StdExternalCrate"
+imports_granularity = "Module"
+reorder_modules = true
+reorder_impl_items = true
+
+# Комментарии
+align_comments = true
+wrap_comments = false
+normalize_comments = true
+
+# Пустые строки
+blank_lines_upper_bound = 3
+blank_lines_lower_bound = 0
+
+# Скобки
+brace_style = "SameLineWhere"
+control_brace_style = "AlwaysSameLine"
+fn_brace_style = "AlwaysSameLine"
+
+# Короткие конструкции
+fn_single_line = true
+struct_lit_single_line = true
+short_array_element_width_threshold = 60
+enum_discrim_align_threshold = 60
+
+# Выравнивание
+align_entries = true
+struct_field_align_threshold = 20
+
+# Match arms
+match_arm_blocks = false
+match_block_trailing_comma = true
+
+# Пробелы
+space_after_colon = true
+space_before_colon = false
+spaces_around_ranges = true
+
+# Дополнительно
+use_field_init_shorthand = true
+format_strings = true
+normalize_doc_attributes = true

@@ -1,0 +1,166 @@
+# .forgejo/workflows/Example.yaml
+name: Кроссплатформенная сборка приложения
+on:
+  workflow_dispatch: {}
+jobs:
+  Build-Linux:
+    runs-on: ubuntu-24
+    container:
+      # https://hub.docker.com/r/ivangabriele/tauri
+      image: 192.168.20.32/library/tauri:d12-n22
+      options: "--tty"
+    env:
+      CI_SERVER_URL: ${{ github.server_url }}
+      CI_REPOSITORY: ${{ github.repository }}
+      CI_JOB_TOKEN: ${{ secrets.FORGEJO_ACCESS_TOKEN }}
+    steps:
+      - name: Установка системных пакетов
+        run: |
+          apt-get update &>/dev/null
+          apt-get install -y libudev-dev libssl-dev xdg-utils git curl jq coreutils grep &>/dev/null
+      - name: Клонирование репозитория
+        run: git clone --recursive "http://${CI_JOB_TOKEN}:x-oauth-basic@${CI_SERVER_URL#http://}/${CI_REPOSITORY}.git" . &>/dev/null
+      - name: Установка зависимостей
+        run: npm ci &>/dev/null
+      - name: Сборка приложения
+        run: npm run tauri build &>/dev/null
+      - name: Выгрузка артифактов
+        run: |
+          OWNER=$(echo "$CI_REPOSITORY" | cut -d'/' -f1)
+          VERSION="$(git rev-parse --short HEAD)"
+          [ -f src-tauri/target/release/bundle/appimage/*.AppImage ] && \
+            cp src-tauri/target/release/bundle/appimage/*.AppImage DevTerminal.AppImage && \
+            curl -s --user "forgejo-user:${CI_JOB_TOKEN}" --upload-file DevTerminal.AppImage \
+              "${CI_SERVER_URL}/api/packages/${OWNER}/generic/dev-terminal/${VERSION}/DevTerminal.AppImage" && \
+            echo "DevTerminal.AppImage загружен ($VERSION)" || echo "DevTerminal.AppImage не найден"
+          echo "Текущая версия: $VERSION"
+          curl -s --user "forgejo-user:${CI_JOB_TOKEN}" "${CI_SERVER_URL}/api/v1/packages/${OWNER}" | \
+            jq -r ".[] | select(.name == \"dev-terminal\") | .version" 2>/dev/null | \
+            grep -v "^${VERSION}$" | sort -r | tail -n +3 | \
+            while IFS= read -r OLD_VERSION; do
+              [ -n "$OLD_VERSION" ] && {
+                echo "Удаляем пакет: $OLD_VERSION"
+                curl -s -X DELETE --user "forgejo-user:${CI_JOB_TOKEN}" \
+                  "${CI_SERVER_URL}/api/packages/${OWNER}/generic/dev-terminal/${OLD_VERSION}" || echo "Ошибка удаления: $OLD_VERSION"
+              }
+            done
+      - name: Очистка
+        run: |
+          rm -rf src-tauri/target &>/dev/null
+          rm -rf node_modules &>/dev/null
+          rm -f DevTerminal.AppImage &>/dev/null
+
+  Build-Windows:
+    runs-on: ubuntu-24
+    container:
+      # https://hub.docker.com/r/ivangabriele/tauri
+      image: 192.168.20.32/library/tauri:d12-n22
+      options: "--tty"
+    env:
+      CI_SERVER_URL: ${{ github.server_url }}
+      CI_REPOSITORY: ${{ github.repository }}
+      CI_JOB_TOKEN: ${{ secrets.FORGEJO_ACCESS_TOKEN }}
+    steps:
+      - name: Установка системных пакетов
+        run: |
+          apt-get update &>/dev/null
+          apt-get install -y libudev-dev libssl-dev mingw-w64 nsis git curl jq coreutils grep &>/dev/null
+      - name: Клонирование репозитория
+        run: git clone --recursive "http://${CI_JOB_TOKEN}:x-oauth-basic@${CI_SERVER_URL#http://}/${CI_REPOSITORY}.git" . &>/dev/null
+
+      - name: Установка зависимостей
+        run: npm ci &>/dev/null
+      - name: Установка цели для Rust
+        run: rustup target add x86_64-pc-windows-gnu &>/dev/null
+      - name: Сборка приложения
+        run: npm run tauri build -- --target x86_64-pc-windows-gnu &>/dev/null
+      - name: Выгрузка артифактов
+        run: |
+          OWNER=$(echo "$CI_REPOSITORY" | cut -d'/' -f1)
+          VERSION="$(git rev-parse --short HEAD)"
+          [ -f src-tauri/target/x86_64-pc-windows-gnu/release/*.exe ] && \
+            cp src-tauri/target/x86_64-pc-windows-gnu/release/*.exe DevTerminal.exe && \
+            curl -s --user "forgejo-user:${CI_JOB_TOKEN}" --upload-file DevTerminal.exe \
+              "${CI_SERVER_URL}/api/packages/${OWNER}/generic/dev-terminal/${VERSION}/DevTerminal.exe" && \
+            echo "DevTerminal.exe загружен ($VERSION)" || echo "DevTerminal.exe не найден"
+          echo "Текущая версия: $VERSION"
+          curl -s --user "forgejo-user:${CI_JOB_TOKEN}" "${CI_SERVER_URL}/api/v1/packages/${OWNER}" | \
+            jq -r ".[] | select(.name == \"dev-terminal\") | .version" 2>/dev/null | \
+            grep -v "^${VERSION}$" | sort -r | tail -n +3 | \
+            while IFS= read -r OLD_VERSION; do
+              [ -n "$OLD_VERSION" ] && {
+                echo "Удаляем пакет: $OLD_VERSION"
+                curl -s -X DELETE --user "forgejo-user:${CI_JOB_TOKEN}" \
+                  "${CI_SERVER_URL}/api/packages/${OWNER}/generic/dev-terminal/${OLD_VERSION}" || echo "Ошибка удаления: $OLD_VERSION"
+              }
+            done
+      - name: Очистка
+        run: |
+          rm -rf src-tauri/target &>/dev/null
+          rm -rf node_modules &>/dev/null
+          rm -f DevTerminal.exe &>/dev/null
+
+  Build-MacOS:
+    runs-on: ubuntu-24
+    container:
+      # https://hub.docker.com/r/joseluisq/rust-linux-darwin-builder
+      image: 192.168.20.32/library/rust-linux-darwin-builder
+      options: "--tty"
+    env:
+      CI_SERVER_URL: ${{ github.server_url }}
+      CI_REPOSITORY: ${{ github.repository }}
+      CI_JOB_TOKEN: ${{ secrets.FORGEJO_ACCESS_TOKEN }}
+    steps:
+      - name: Установка системных пакетов
+        run: |
+          apt-get update &>/dev/null
+          apt-get install -y git curl jq coreutils grep &>/dev/null
+          curl -fsSL https://deb.nodesource.com/setup_24.x | bash - &>/dev/null
+          apt-get install -y nodejs &>/dev/null
+
+      - name: Клонирование репозитория
+        run: git clone --recursive "http://${CI_JOB_TOKEN}:x-oauth-basic@${CI_SERVER_URL#http://}/${CI_REPOSITORY}.git" . &>/dev/null
+
+      - name: Установка зависимостей
+        run: npm ci &>/dev/null
+      - name: Сборка приложения (Intel x64)
+        run: |
+          export CC=o64-clang
+          export CXX=o64-clang++
+          npm run tauri build -- --target x86_64-apple-darwin &>/dev/null
+      - name: Сборка приложения (Apple Silicon ARM64)
+        run: |
+          export CC=oa64-clang
+          export CXX=oa64-clang++
+          npm run tauri build -- --target aarch64-apple-darwin &>/dev/null
+      - name: Выгрузка артифактов
+        run: |
+          OWNER=$(echo "$CI_REPOSITORY" | cut -d'/' -f1)
+          VERSION="$(git rev-parse --short HEAD)"
+          [ -f src-tauri/target/x86_64-apple-darwin/release/dev_terminal ] && \
+            cp src-tauri/target/x86_64-apple-darwin/release/dev_terminal DevTerminal-Intel.app && \
+            curl -s --user "forgejo-user:${CI_JOB_TOKEN}" --upload-file DevTerminal-Intel.app \
+              "${CI_SERVER_URL}/api/packages/${OWNER}/generic/dev-terminal/${VERSION}/DevTerminal-Intel.app" && \
+            echo "DevTerminal-Intel.app загружен ($VERSION)" || echo "DevTerminal-Intel.app не найден"
+          [ -f src-tauri/target/aarch64-apple-darwin/release/dev_terminal ] && \
+            cp src-tauri/target/aarch64-apple-darwin/release/dev_terminal DevTerminal-ARM.app && \
+            curl -s --user "forgejo-user:${CI_JOB_TOKEN}" --upload-file DevTerminal-ARM.app \
+              "${CI_SERVER_URL}/api/packages/${OWNER}/generic/dev-terminal/${VERSION}/DevTerminal-ARM.app" && \
+            echo "DevTerminal-ARM.app загружен ($VERSION)" || echo "DevTerminal-ARM.app не найден"
+          echo "Текущая версия: $VERSION"
+          curl -s --user "forgejo-user:${CI_JOB_TOKEN}" "${CI_SERVER_URL}/api/v1/packages/${OWNER}" | \
+            jq -r ".[] | select(.name == \"dev-terminal\") | .version" 2>/dev/null | \
+            grep -v "^${VERSION}$" | sort -r | tail -n +3 | \
+            while IFS= read -r OLD_VERSION; do
+              [ -n "$OLD_VERSION" ] && {
+                echo "Удаляем пакет: $OLD_VERSION"
+                curl -s -X DELETE --user "forgejo-user:${CI_JOB_TOKEN}" \
+                  "${CI_SERVER_URL}/api/packages/${OWNER}/generic/dev-terminal/${OLD_VERSION}" || echo "Ошибка удаления: $OLD_VERSION"
+              }
+            done
+      - name: Очистка
+        run: |
+          rm -rf src-tauri/target &>/dev/null
+          rm -rf node_modules &>/dev/null
+          rm -f DevTerminal-Intel.app &>/dev/null
+          rm -f DevTerminal-ARM.app &>/dev/null

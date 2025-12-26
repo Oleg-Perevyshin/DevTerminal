@@ -1,0 +1,87 @@
+# .forgejo/workflows/Test-Cross-Build.yaml
+name: Кроссплатформенная проверка сборки приложения
+on:
+  workflow_dispatch: {}
+jobs:
+  Build-Linux:
+    runs-on: ubuntu-24
+    container:
+      # https://hub.docker.com/r/ivangabriele/tauri
+      image: 192.168.20.32/library/tauri:d12-n22
+      options: "--tty"
+    env:
+      CI_SERVER_URL: ${{ github.server_url }}
+      CI_REPOSITORY: ${{ github.repository }}
+      CI_JOB_TOKEN: ${{ secrets.FORGEJO_ACCESS_TOKEN }}
+    steps:
+      - name: Установка системных пакетов
+        run: |
+          apt-get update &>/dev/null
+          apt-get install -y libudev-dev libssl-dev xdg-utils git curl jq coreutils grep &>/dev/null
+      - name: Клонирование репозитория
+        run: git clone --recursive "http://${CI_JOB_TOKEN}:x-oauth-basic@${CI_SERVER_URL#http://}/${CI_REPOSITORY}.git" . &>/dev/null
+      - name: Установка зависимостей
+        run: npm ci &>/dev/null
+      - name: Сборка приложения
+        run: npm run tauri build &>/dev/null
+      - name: Очистка
+        run: rm -rf src-tauri/target node_modules &>/dev/null
+
+  Build-Windows:
+    runs-on: ubuntu-24
+    container:
+      # https://hub.docker.com/r/ivangabriele/tauri
+      image: 192.168.20.32/library/tauri:d12-n22
+      options: "--tty"
+    env:
+      CI_SERVER_URL: ${{ github.server_url }}
+      CI_REPOSITORY: ${{ github.repository }}
+      CI_JOB_TOKEN: ${{ secrets.FORGEJO_ACCESS_TOKEN }}
+    steps:
+      - name: Установка системных пакетов
+        run: |
+          apt-get update &>/dev/null
+          apt-get install -y libudev-dev libssl-dev mingw-w64 nsis git curl jq coreutils grep &>/dev/null
+      - name: Клонирование репозитория
+        run: git clone --recursive "http://${CI_JOB_TOKEN}:x-oauth-basic@${CI_SERVER_URL#http://}/${CI_REPOSITORY}.git" . &>/dev/null
+      - name: Установка зависимостей
+        run: npm ci &>/dev/null
+      - name: Установка цели для Rust
+        run: rustup target add x86_64-pc-windows-gnu &>/dev/null
+      - name: Сборка приложения
+        run: npm run tauri build -- --target x86_64-pc-windows-gnu &>/dev/null
+      - name: Очистка
+        run: rm -rf src-tauri/target node_modules &>/dev/null
+
+  Build-MacOS:
+    runs-on: ubuntu-24
+    container:
+      # https://hub.docker.com/r/joseluisq/rust-linux-darwin-builder
+      image: 192.168.20.32/library/rust-linux-darwin-builder
+      options: "--tty"
+    env:
+      CI_SERVER_URL: ${{ github.server_url }}
+      CI_REPOSITORY: ${{ github.repository }}
+      CI_JOB_TOKEN: ${{ secrets.FORGEJO_ACCESS_TOKEN }}
+    steps:
+      - name: Установка системных пакетов
+        run: |
+          apt-get install -y git curl jq coreutils grep &>/dev/null
+          curl -fsSL https://deb.nodesource.com/setup_24.x | bash - &>/dev/null
+          apt-get install -y nodejs &>/dev/null
+      - name: Клонирование репозитория
+        run: git clone --recursive "http://${CI_JOB_TOKEN}:x-oauth-basic@${CI_SERVER_URL#http://}/${CI_REPOSITORY}.git" . &>/dev/null
+      - name: Установка зависимостей
+        run: npm ci &>/dev/null
+      - name: Сборка приложения (Intel x64)
+        run: |
+          export CC=o64-clang
+          export CXX=o64-clang++
+          npm run tauri build -- --target x86_64-apple-darwin &>/dev/null
+      - name: Сборка приложения (Apple Silicon ARM64)
+        run: |
+          export CC=oa64-clang
+          export CXX=oa64-clang++
+          npm run tauri build -- --target aarch64-apple-darwin &>/dev/null
+      - name: Очистка
+        run: rm -rf src-tauri/target node_modules &>/dev/null
