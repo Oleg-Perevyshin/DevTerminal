@@ -15,9 +15,7 @@ jobs:
       CI_JOB_TOKEN: ${{ secrets.FORGEJO_ACCESS_TOKEN }}
     steps:
       - name: Установка системных пакетов
-        run: |
-          apt-get update
-          apt-get install -y libudev-dev libssl-dev xdg-utils git curl jq coreutils grep
+        run: apt-get update && apt-get install -y libudev-dev libssl-dev xdg-utils git curl jq coreutils grep
       - name: Клонирование репозитория
         run: git clone --recursive "http://${CI_JOB_TOKEN}:x-oauth-basic@${CI_SERVER_URL#http://}/${CI_REPOSITORY}.git" .
       - name: Установка зависимостей
@@ -39,9 +37,7 @@ jobs:
       CI_JOB_TOKEN: ${{ secrets.FORGEJO_ACCESS_TOKEN }}
     steps:
       - name: Установка системных пакетов
-        run: |
-          apt-get update
-          apt-get install -y libudev-dev libssl-dev mingw-w64 nsis git curl jq coreutils grep
+        run: apt-get update && apt-get install -y libudev-dev libssl-dev mingw-w64 nsis git curl jq coreutils grep
       - name: Клонирование репозитория
         run: git clone --recursive "http://${CI_JOB_TOKEN}:x-oauth-basic@${CI_SERVER_URL#http://}/${CI_REPOSITORY}.git" .
       - name: Установка зависимостей
@@ -66,7 +62,7 @@ jobs:
     steps:
       - name: Установка системных пакетов
         run: |
-          apt-get install -y git curl jq coreutils grep
+          apt-get update && apt-get install -y git curl jq coreutils grep
           curl -fsSL https://deb.nodesource.com/setup_24.x | bash -
           apt-get install -y nodejs
       - name: Клонирование репозитория
