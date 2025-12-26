@@ -16,16 +16,16 @@ jobs:
     steps:
       - name: Установка системных пакетов
         run: |
-          apt-get update &>/dev/null
-          apt-get install -y libudev-dev libssl-dev xdg-utils git curl jq coreutils grep &>/dev/null
+          apt-get update
+          apt-get install -y libudev-dev libssl-dev xdg-utils git curl jq coreutils grep
       - name: Клонирование репозитория
-        run: git clone --recursive "http://${CI_JOB_TOKEN}:x-oauth-basic@${CI_SERVER_URL#http://}/${CI_REPOSITORY}.git" . &>/dev/null
+        run: git clone --recursive "http://${CI_JOB_TOKEN}:x-oauth-basic@${CI_SERVER_URL#http://}/${CI_REPOSITORY}.git" .
       - name: Установка зависимостей
-        run: npm ci &>/dev/null
+        run: npm ci
       - name: Сборка приложения
-        run: npm run tauri build &>/dev/null
+        run: npm run tauri build
       - name: Очистка
-        run: rm -rf src-tauri/target node_modules &>/dev/null
+        run: rm -rf src-tauri/target node_modules
 
   Build-Windows:
     runs-on: ubuntu-24
@@ -40,18 +40,18 @@ jobs:
     steps:
       - name: Установка системных пакетов
         run: |
-          apt-get update &>/dev/null
-          apt-get install -y libudev-dev libssl-dev mingw-w64 nsis git curl jq coreutils grep &>/dev/null
+          apt-get update
+          apt-get install -y libudev-dev libssl-dev mingw-w64 nsis git curl jq coreutils grep
       - name: Клонирование репозитория
-        run: git clone --recursive "http://${CI_JOB_TOKEN}:x-oauth-basic@${CI_SERVER_URL#http://}/${CI_REPOSITORY}.git" . &>/dev/null
+        run: git clone --recursive "http://${CI_JOB_TOKEN}:x-oauth-basic@${CI_SERVER_URL#http://}/${CI_REPOSITORY}.git" .
       - name: Установка зависимостей
-        run: npm ci &>/dev/null
+        run: npm ci
       - name: Установка цели для Rust
-        run: rustup target add x86_64-pc-windows-gnu &>/dev/null
+        run: rustup target add x86_64-pc-windows-gnu
       - name: Сборка приложения
-        run: npm run tauri build -- --target x86_64-pc-windows-gnu &>/dev/null
+        run: npm run tauri build -- --target x86_64-pc-windows-gnu
       - name: Очистка
-        run: rm -rf src-tauri/target node_modules &>/dev/null
+        run: rm -rf src-tauri/target node_modules
 
   Build-MacOS:
     runs-on: ubuntu-24
@@ -66,22 +66,22 @@ jobs:
     steps:
       - name: Установка системных пакетов
         run: |
-          apt-get install -y git curl jq coreutils grep &>/dev/null
-          curl -fsSL https://deb.nodesource.com/setup_24.x | bash - &>/dev/null
-          apt-get install -y nodejs &>/dev/null
+          apt-get install -y git curl jq coreutils grep
+          curl -fsSL https://deb.nodesource.com/setup_24.x | bash -
+          apt-get install -y nodejs
       - name: Клонирование репозитория
-        run: git clone --recursive "http://${CI_JOB_TOKEN}:x-oauth-basic@${CI_SERVER_URL#http://}/${CI_REPOSITORY}.git" . &>/dev/null
+        run: git clone --recursive "http://${CI_JOB_TOKEN}:x-oauth-basic@${CI_SERVER_URL#http://}/${CI_REPOSITORY}.git" .
       - name: Установка зависимостей
-        run: npm ci &>/dev/null
+        run: npm ci
       - name: Сборка приложения (Intel x64)
         run: |
           export CC=o64-clang
           export CXX=o64-clang++
-          npm run tauri build -- --target x86_64-apple-darwin &>/dev/null
+          npm run tauri build -- --target x86_64-apple-darwin
       - name: Сборка приложения (Apple Silicon ARM64)
         run: |
           export CC=oa64-clang
           export CXX=oa64-clang++
-          npm run tauri build -- --target aarch64-apple-darwin &>/dev/null
+          npm run tauri build -- --target aarch64-apple-darwin
       - name: Очистка
-        run: rm -rf src-tauri/target node_modules &>/dev/null
+        run: rm -rf src-tauri/target node_modules
