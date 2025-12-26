@@ -7,7 +7,7 @@ jobs:
     runs-on: ubuntu-24
     container:
       # https://hub.docker.com/r/ivangabriele/tauri
-      image: 192.168.20.32/library/tauri:d12-n22
+      image: 192.168.20.32/library/tauri:d12n22
       options: "--tty"
     env:
       CI_SERVER_URL: ${{ github.server_url }}
@@ -31,7 +31,7 @@ jobs:
     runs-on: ubuntu-24
     container:
       # https://hub.docker.com/r/ivangabriele/tauri
-      image: 192.168.20.32/library/tauri:d12-n22
+      image: 192.168.20.32/library/tauri:d12n22
       options: "--tty"
     env:
       CI_SERVER_URL: ${{ github.server_url }}
