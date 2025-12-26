@@ -14,6 +14,10 @@ jobs:
       CI_REPOSITORY: ${{ github.repository }}
       CI_JOB_TOKEN: ${{ secrets.FORGEJO_ACCESS_TOKEN }}
     steps:
+      - name: Переключение на зеркало в Беларуси
+        run: |
+          sed -i 's|http://deb.debian.org/debian|http://mirror.datacenter.by/debian|g' /etc/apt/sources.list
+          sed -i 's|http://security.debian.org/debian-security|http://mirror.datacenter.by/debian-security|g' /etc/apt/sources.list
       - name: Установка системных пакетов
         run: apt-get update && apt-get install -y libudev-dev libssl-dev xdg-utils git curl jq coreutils grep
       - name: Клонирование репозитория
@@ -36,6 +40,10 @@ jobs:
       CI_REPOSITORY: ${{ github.repository }}
       CI_JOB_TOKEN: ${{ secrets.FORGEJO_ACCESS_TOKEN }}
     steps:
+      - name: Переключение на зеркало в Беларуси
+        run: |
+          sed -i 's|http://deb.debian.org/debian|http://mirror.datacenter.by/debian|g' /etc/apt/sources.list
+          sed -i 's|http://security.debian.org/debian-security|http://mirror.datacenter.by/debian-security|g' /etc/apt/sources.list
       - name: Установка системных пакетов
         run: apt-get update && apt-get install -y libudev-dev libssl-dev mingw-w64 nsis git curl jq coreutils grep
       - name: Клонирование репозитория
@@ -60,6 +68,10 @@ jobs:
       CI_REPOSITORY: ${{ github.repository }}
       CI_JOB_TOKEN: ${{ secrets.FORGEJO_ACCESS_TOKEN }}
     steps:
+      - name: Переключение на зеркало в Беларуси
+        run: |
+          sed -i 's|http://deb.debian.org/debian|http://mirror.datacenter.by/debian|g' /etc/apt/sources.list
+          sed -i 's|http://security.debian.org/debian-security|http://mirror.datacenter.by/debian-security|g' /etc/apt/sources.list
       - name: Установка системных пакетов
         run: |
           apt-get update && apt-get install -y git curl jq coreutils grep
