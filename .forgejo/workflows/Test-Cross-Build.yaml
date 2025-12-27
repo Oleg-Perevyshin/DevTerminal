@@ -4,11 +4,8 @@ on:
   workflow_dispatch: {}
 jobs:
   Build-Linux:
-    runs-on: ubuntu-24
-    container:
-      # https://hub.docker.com/r/ivangabriele/tauri
-      image: 192.168.20.32/library/tauri:d12n22
-      options: "--tty"
+    # https://hub.docker.com/r/ivangabriele/tauri
+    runs-on: tauri-debian
     env:
       CI_SERVER_URL: ${{ github.server_url }}
       CI_REPOSITORY: ${{ github.repository }}
@@ -43,11 +40,8 @@ jobs:
         run: rm -rf src-tauri/target node_modules
 
   Build-Windows:
-    runs-on: ubuntu-24
-    container:
-      # https://hub.docker.com/r/ivangabriele/tauri
-      image: 192.168.20.32/library/tauri:d12n22
-      options: "--tty"
+    # https://hub.docker.com/r/ivangabriele/tauri
+    runs-on: tauri-debian
     env:
       CI_SERVER_URL: ${{ github.server_url }}
       CI_REPOSITORY: ${{ github.repository }}
@@ -84,11 +78,8 @@ jobs:
         run: rm -rf src-tauri/target node_modules
 
   Build-MacOS:
-    runs-on: ubuntu-24
-    container:
-      # https://hub.docker.com/r/joseluisq/rust-linux-darwin-builder
-      image: 192.168.20.32/library/rust-linux-darwin-builder
-      options: "--tty"
+    # https://hub.docker.com/r/joseluisq/rust-linux-darwin-builder
+    runs-on: rust-linux-darwin-builder
     env:
       CI_SERVER_URL: ${{ github.server_url }}
       CI_REPOSITORY: ${{ github.repository }}
