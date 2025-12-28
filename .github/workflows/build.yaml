@@ -4,23 +4,23 @@ on:
   workflow_dispatch: {}
 
 jobs:
-  build-macos-simple:
-    runs-on: macos-latest
+  build:
+    runs-on: macos-15-arm64
     
     steps:
-    - name: Checkout
-      uses: actions/checkout@v3
-      
+    - uses: actions/checkout@v4
+    
     - name: Setup
-      uses: ./.github/actions/setup
-      
-    - name: Build
       run: |
-        npm ci
-        npm run tauri build
+        brew install create-dmg
+        npm install
+        npm install @tauri-apps/cli
         
-    - name: Upload DMG
-      uses: actions/upload-artifact@v3
+    - name: Build
+      run: npx tauri build
+      
+    - name: Upload results
+      uses: actions/upload-artifact@v4
       with:
-        name: app-dmg
+        name: app-build
         path: src-tauri/target/**/*.dmg
