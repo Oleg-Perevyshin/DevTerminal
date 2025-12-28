@@ -1,4 +1,4 @@
-name: Build Tauri App (macOS)
+name: Build macOS ARM
 
 on:
   workflow_dispatch: {}
@@ -8,19 +8,40 @@ jobs:
     runs-on: macos-latest
     
     steps:
-    - uses: actions/checkout@v4
-    
-    - name: Setup
-      run: |
-        brew install create-dmg
-        npm install
-        npm install @tauri-apps/cli
-        
-    - name: Build
-      run: npx tauri build
-      
-    - name: Upload results
-      uses: actions/upload-artifact@v4
-      with:
-        name: app-build
-        path: src-tauri/target/**/*.dmg
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-darwin
+
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo
+            node_modules
+            src-tauri/target
+          key: ${{ runner.os }}-${{ hashFiles('**/Cargo.lock', '**/package-lock.json') }}
+
+      - name: Install dependencies
+        run: |
+          npm ci
+          npm install @tauri-apps/cli
+
+      - name: Build Tauri app
+        run: npm run tauri build -- --target aarch64-apple-darwin
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: macOS-ARM64-App
+          path: |
+            src-tauri/target/aarch64-apple-darwin/release/bundle/dmg/*.dmg
+            src-tauri/target/aarch64-apple-darwin/release/bundle/macos/*.app
